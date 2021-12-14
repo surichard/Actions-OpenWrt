@@ -28,6 +28,7 @@ env:
   CONFIG_FILE: x86.config
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
+  RELEASE_TAG: X86
   UPLOAD_BIN_DIR: true
   UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: true
@@ -42,7 +43,17 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@main
-
+      
+    - name: TG Message
+      if: env.SERVERCHAN_SCKEY == 'true'
+      run: |
+        curl -k --data chat_id=${{ secrets.TGID }} --data "text=主人：正在为您编译新的$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M"),请耐心等待...... 😋💐" "https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/sendMessage"
+        
+    - name: PUSHPLUS Message
+      if: env.SERVERCHAN_SCKEY == 'true'
+      run: |
+        curl -k --data token="${{ secrets.PUSH_PLUS_TOKEN }}" --data title="开始编译$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M")" --data "content=🎉 主人：正在为您编译新的$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M"),请耐心等待...... 😋💐" "http://www.pushplus.plus/send"
+ 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -160,7 +171,7 @@ jobs:
       id: tag
       if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "::set-output name=release_tag::$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer](${{ steps.cowtransfer.outputs.url }})" >> release.txt
         [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer](${{ steps.wetransfer.outputs.url }})" >> release.txt
@@ -190,3 +201,13 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.PAT }}
+
+    - name: TG Message
+      if: env.SERVERCHAN_SCKEY == 'true'
+      run: |
+        curl -k --data chat_id=${{ secrets.TGID }} --data "text=我亲爱的主人您要编译的$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M")固件编译成功！" "https://api.telegram.org/bot${{ secrets.TG_TOKEN }}/sendMessage"
+        
+    - name: PUSHPLUS Message
+      if: env.SERVERCHAN_SCKEY == 'true'
+      run: |
+        curl -k --data token="${{ secrets.PUSH_PLUS_TOKEN }}" --data title="恭喜主人$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M")固件编译成功！" --data "content=我亲爱的主人您要编译的$RELEASE_TAG-$(date +"%Y.%m.%d-%H%M")固件成功完成了！" "http://www.pushplus.plus/send"
